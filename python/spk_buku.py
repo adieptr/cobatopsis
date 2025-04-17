@@ -15,13 +15,13 @@ def topsis(data, weights):
     return score
 
 if __name__ == "__main__":
-    # Baca input JSON dari stdin (bukan argv!)
+    # ✅ Gunakan stdin lagi seperti awal
     input_data = sys.stdin.read()
     args = json.loads(input_data)
 
     alternatif = args['alternatif']
-    matriks = np.array(args['matriks'])
-    bobot = np.array(args['bobot'])
+    matriks = np.array(args['matriks'], dtype=float)
+    bobot = np.array(args['bobot'], dtype=float)
 
     hasil = topsis(pd.DataFrame(matriks), bobot)
 

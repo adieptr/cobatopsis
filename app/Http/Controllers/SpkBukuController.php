@@ -24,10 +24,42 @@ class SpkBukuController extends Controller
         ]);
 
         $pythonPath = base_path('python/spk_buku.py');
-        $command = escapeshellcmd("python \"$pythonPath\" '" . addslashes($payload) . "'");
-        $output = shell_exec($command);
-        $hasil = json_decode($output, true);
+        $pythonExe = 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python311\\python.exe';
 
-        return view('hasil_rekomendasi', ['hasil' => $hasil]);
+        $process = proc_open(
+            "\"$pythonExe\" \"$pythonPath\"",
+            [
+                0 => ['pipe', 'r'], // stdin
+                1 => ['pipe', 'w'], // stdout
+                2 => ['pipe', 'w'], // stderr
+            ],
+            $pipes
+        );
+
+        if (is_resource($process)) {
+            fwrite($pipes[0], $payload); // kirim JSON ke stdin
+            fclose($pipes[0]);
+
+            $output = stream_get_contents($pipes[1]);
+            $error = stream_get_contents($pipes[2]);
+
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            proc_close($process);
+
+            if (!empty($error)) {
+                dd("Python error:", $error); // tampilkan error dari Python
+            }
+
+            $hasil = json_decode($output, true);
+            if (!is_array($hasil)) {
+                $hasil = [];
+            }
+
+            return view('hasil_rekomendasi', ['hasil' => $hasil]);
+        }
+
+        // Fallback kalau process gagal
+        return view('hasil_rekomendasi', ['hasil' => []]);
     }
 }
